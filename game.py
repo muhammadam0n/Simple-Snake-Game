@@ -1,188 +1,154 @@
-# Program in Python to create a Snake Game 
-
 from tkinter import *
-import random 
+import random
 
-# Initialising Dimensions of Game 
+# Initialising Dimensions of Game
 WIDTH = 500
 HEIGHT = 500
 SPEED = 200
 SPACE_SIZE = 20
 BODY_SIZE = 2
-SNAKE = "#0000FF"
-FOOD = "#FFFF00"
-BACKGROUND = "#000000"
+SNAKE = "#00FF00"  # Green snake
+FOOD = "#FF0000"   # Red food
+BACKGROUND = "#1E1E1E"  # Dark background
 
-# Class to design the snake 
-class Snake: 
+# Class to design the snake
+class Snake:
+    def __init__(self):
+        self.body_size = BODY_SIZE
+        self.coordinates = []
+        self.squares = []
 
-	def __init__(self): 
-		self.body_size = BODY_SIZE 
-		self.coordinates = [] 
-		self.squares = [] 
+        for i in range(0, BODY_SIZE):
+            self.coordinates.append([0, 0])
 
-		for i in range(0, BODY_SIZE): 
-			self.coordinates.append([0, 0]) 
+        for x, y in self.coordinates:
+            square = canvas.create_rectangle(
+                x, y, x + SPACE_SIZE, y + SPACE_SIZE,
+                fill=SNAKE, tag="snake")
+            self.squares.append(square)
 
-		for x, y in self.coordinates: 
-			square = canvas.create_rectangle( 
-				x, y, x + SPACE_SIZE, y + SPACE_SIZE, 
-					fill=SNAKE, tag="snake") 
-			self.squares.append(square) 
+# Class to design the food
+class Food:
+    def __init__(self):
+        x = random.randint(0, (WIDTH / SPACE_SIZE)-1) * SPACE_SIZE
+        y = random.randint(0, (HEIGHT / SPACE_SIZE) - 1) * SPACE_SIZE
 
-# Class to design the food 
-class Food: 
+        self.coordinates = [x, y]
 
-	def __init__(self): 
+        canvas.create_oval(x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=FOOD, tag="food")
 
-		x = random.randint(0, 
-				(WIDTH / SPACE_SIZE)-1) * SPACE_SIZE 
-		y = random.randint(0, 
-				(HEIGHT / SPACE_SIZE) - 1) * SPACE_SIZE 
+# Function to check the next move of snake
+def next_turn(snake, food):
+    x, y = snake.coordinates[0]
 
-		self.coordinates = [x, y] 
+    if direction == "up":
+        y -= SPACE_SIZE
+    elif direction == "down":
+        y += SPACE_SIZE
+    elif direction == "left":
+        x -= SPACE_SIZE
+    elif direction == "right":
+        x += SPACE_SIZE
 
-		canvas.create_oval(x, y, x + SPACE_SIZE, y +
-						SPACE_SIZE, fill=FOOD, tag="food") 
+    snake.coordinates.insert(0, (x, y))
 
-# Function to check the next move of snake 
-def next_turn(snake, food): 
+    square = canvas.create_rectangle(
+        x, y, x + SPACE_SIZE, y + SPACE_SIZE, fill=SNAKE)
 
-	x, y = snake.coordinates[0] 
+    snake.squares.insert(0, square)
 
-	if direction == "up": 
-		y -= SPACE_SIZE 
-	elif direction == "down": 
-		y += SPACE_SIZE 
-	elif direction == "left": 
-		x -= SPACE_SIZE 
-	elif direction == "right": 
-		x += SPACE_SIZE 
+    if x == food.coordinates[0] and y == food.coordinates[1]:
+        global score
+        score += 1
+        label.config(text="Points: {}".format(score))
+        canvas.delete("food")
+        food = Food()
+    else:
+        del snake.coordinates[-1]
+        canvas.delete(snake.squares[-1])
+        del snake.squares[-1]
 
-	snake.coordinates.insert(0, (x, y)) 
+    if check_collisions(snake):
+        game_over()
+    else:
+        window.after(SPEED, next_turn, snake, food)
 
-	square = canvas.create_rectangle( 
-		x, y, x + SPACE_SIZE, 
-				y + SPACE_SIZE, fill=SNAKE) 
+# Function to control direction of snake
+def change_direction(new_direction):
+    global direction
 
-	snake.squares.insert(0, square) 
+    if new_direction == 'left':
+        if direction != 'right':
+            direction = new_direction
+    elif new_direction == 'right':
+        if direction != 'left':
+            direction = new_direction
+    elif new_direction == 'up':
+        if direction != 'down':
+            direction = new_direction
+    elif new_direction == 'down':
+        if direction != 'up':
+            direction = new_direction
 
-	if x == food.coordinates[0] and y == food.coordinates[1]: 
+# Function to check snake's collision and position
+def check_collisions(snake):
+    x, y = snake.coordinates[0]
 
-		global score 
+    if x < 0 or x >= WIDTH:
+        return True
+    elif y < 0 or y >= HEIGHT:
+        return True
 
-		score += 1
+    for body_part in snake.coordinates[1:]:
+        if x == body_part[0] and y == body_part[1]:
+            return True
 
-		label.config(text="Points:{}".format(score)) 
+    return False
 
-		canvas.delete("food") 
+# Function to control everything
+def game_over():
+    canvas.delete(ALL)
+    canvas.create_text(canvas.winfo_width()/2, canvas.winfo_height()/2,
+                       font=('Arial', 50, 'bold'),
+                       text="GAME OVER", fill="red",
+                       tag="gameover")
 
-		food = Food() 
-
-	else: 
-
-		del snake.coordinates[-1] 
-
-		canvas.delete(snake.squares[-1]) 
-
-		del snake.squares[-1] 
-
-	if check_collisions(snake): 
-		game_over() 
-
-	else: 
-		window.after(SPEED, next_turn, snake, food) 
-
-# Function to control direction of snake 
-def change_direction(new_direction): 
-
-	global direction 
-
-	if new_direction == 'left': 
-		if direction != 'right': 
-			direction = new_direction 
-	elif new_direction == 'right': 
-		if direction != 'left': 
-			direction = new_direction 
-	elif new_direction == 'up': 
-		if direction != 'down': 
-			direction = new_direction 
-	elif new_direction == 'down': 
-		if direction != 'up': 
-			direction = new_direction 
-
-# function to check snake's collision and position 
-def check_collisions(snake): 
-
-	x, y = snake.coordinates[0] 
-
-	if x < 0 or x >= WIDTH: 
-		return True
-	elif y < 0 or y >= HEIGHT: 
-		return True
-
-	for body_part in snake.coordinates[1:]: 
-		if x == body_part[0] and y == body_part[1]: 
-			return True
-
-	return False
-
-# Function to control everything 
-def game_over(): 
-
-	canvas.delete(ALL) 
-	canvas.create_text(canvas.winfo_width()/2, 
-					canvas.winfo_height()/2, 
-					font=('consolas', 70), 
-					text="GAME OVER", fill="red", 
-					tag="gameover") 
-
-# Giving title to the gaming window 
-
-
-window = Tk() 
-window.title("Snake Game") 
-
+# Main window setup
+window = Tk()
+window.title("Snake Game")
 
 score = 0
 direction = 'down'
 
-# Display of Points Scored in Game 
+# Display of Points Scored in Game
+label = Label(window, text="Points: {}".format(score),
+              font=('Arial', 20, 'bold'), fg="white", bg=BACKGROUND)
+label.pack()
 
-label = Label(window, text="Points:{}".format(score), 
-			font=('consolas', 20)) 
-label.pack() 
+canvas = Canvas(window, bg=BACKGROUND, height=HEIGHT, width=WIDTH)
+canvas.pack()
 
-canvas = Canvas(window, bg=BACKGROUND, 
-				height=HEIGHT, width=WIDTH) 
-canvas.pack() 
+window.update()
 
-window.update() 
+window_width = window.winfo_width()
+window_height = window.winfo_height()
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
 
-window_width = window.winfo_width() 
-window_height = window.winfo_height() 
-screen_width = window.winfo_screenwidth() 
-screen_height = window.winfo_screenheight() 
+x = int((screen_width/2) - (window_width/2))
+y = int((screen_height/2) - (window_height/2))
 
-x = int((screen_width/2) - (window_width/2)) 
-y = int((screen_height/2) - (window_height/2)) 
+window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
-window.geometry(f"{window_width}x{window_height}+{x}+{y}") 
+# Binding keys
+window.bind('<Left>', lambda event: change_direction('left'))
+window.bind('<Right>', lambda event: change_direction('right'))
+window.bind('<Up>', lambda event: change_direction('up'))
+window.bind('<Down>', lambda event: change_direction('down'))
 
-window.bind('<Left>', 
-			lambda event: change_direction('left')) 
-window.bind('<Right>', 
-			lambda event: change_direction('right')) 
-window.bind('<Up>', 
-			lambda event: change_direction('up')) 
-window.bind('<Down>', 
-			lambda event: change_direction('down')) 
+snake = Snake()
+food = Food()
 
-snake = Snake() 
-food = Food() 
+next_turn(snake, food)
 
-next_turn(snake, food) 
-
-window.mainloop() 
-
-# This code is contributed by genius_general 
+window.mainloop()
